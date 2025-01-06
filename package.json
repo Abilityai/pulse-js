@@ -1,0 +1,10 @@
+{
+  "name": "pulse",
+  "version": "0.0.1",
+  "description": "The SDK to connect to the ability.ai/llm_core",
+  "main": "index.js",
+  "repository": "https://github.com/Abilityai/pulse-js",
+  "author": "Alex Osypenko <alex@ability.ai>",
+  "license": "COMMERCIAL",
+  "private": true
+}
