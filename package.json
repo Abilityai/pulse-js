@@ -2,9 +2,33 @@
   "name": "pulse",
   "version": "0.0.1",
   "description": "The SDK to connect to the ability.ai/llm_core",
-  "main": "index.js",
+  "main": "src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./chat": "./src/models/chat/index.js",
+    "./image": "./src/models/image/index.js",
+    "./memory": "./src/memory/index.js"
+  },
   "repository": "https://github.com/Abilityai/pulse-js",
   "author": "Alex Osypenko <alex@ability.ai>",
   "license": "COMMERCIAL",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.3.1",
+    "form-data": "^4.0.1",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "example:gpt": "node examples/gpt.js",
+    "example:claude": "node examples/claude.js",
+    "example:llama": "node examples/llama.js",
+    "example:dalle": "node examples/dalle.js",
+    "example:memory": "node examples/memory.js"
+  }
 }
