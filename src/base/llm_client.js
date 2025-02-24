@@ -31,10 +31,12 @@ export class LLMClient {
       }
     }
 
-    if (!config.apiKey) {
-      throw new Error("apiKey is required");
-    }
-    this.apiKey = config.apiKey;
+    this.apiKey = (function ({apiKey}) {
+      const result = apiKey || process.env.LLM_AGENCY_KEY;
+      if (!result) {
+        throw new Error("apiKey is required");
+      }
+    })(config)
   }
 
   async _request(data = {}, url = '', method_name = 'POST') {
