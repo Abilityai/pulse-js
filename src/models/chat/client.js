@@ -119,7 +119,7 @@ export class Chat extends LLMClient {
     })(originalTools);
 
     const data = await this._processData({ messages, tools: deduplicatedTools, ...rest });
-    const response = await this._request(data);
+    const response = await this._request(data, this.urlPath);
     const result = await this._processResponse(response);
 
     // Handle function calling

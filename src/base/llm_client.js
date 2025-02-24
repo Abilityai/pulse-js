@@ -3,7 +3,7 @@ export class LLMClient {
     this.getUrl = function (url) {
       const b = (function ({ baseUrl, baseDomain, basePort, baseProtocol }) {
         if (baseUrl === undefined) {
-          const domain = baseDomain !== undefined ? baseDomain : process.env.LLM_AGENCY_DOMAIN;
+          const domain = baseDomain !== undefined ? baseDomain : (process.env.LLM_AGENCY_DOMAIN || 'localhost');
           let port = basePort !== undefined ? basePort : (process.env.LLM_AGENCY_PORT || '5001');
           let protocol = baseProtocol !== undefined ? baseProtocol : (process.env.LLM_AGENCY_PROTOCOL || (port === '443' ? 'https' : 'http'));
           if (port === '80' || port === '443') {
@@ -17,6 +17,7 @@ export class LLMClient {
         }
         return baseUrl;
       })(config);
+
       const u = (function ({ urlPath }) {
         if (urlPath === undefined) {
           return '';
@@ -27,18 +28,13 @@ export class LLMClient {
         return `/${urlPath}`;
       })(config);
 
-      if (url.startsWith('/')) {
-        return `${b}${u}${url}`;
-      } else {
-        return `${b}${u}/${url}`;
-      }
+      return `${b}${u}/${url.slice(url.startsWith('/') ? 1 : 0)}`;
     }
 
-    this.apiKey = (function ({apiKey}) {
+    this.apiKey = (function ({ apiKey }) {
       const result = apiKey || process.env.LLM_AGENCY_KEY;
-      if (!result) {
-        throw new Error("apiKey is required");
-      }
+      if (result === '' || result === undefined) throw new Error("apiKey is required");
+      return result;
     })(config)
   }
 
