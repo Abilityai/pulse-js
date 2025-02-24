@@ -24,7 +24,28 @@
 import axios from 'axios';
 import FormData from 'form-data';
 
-const BASE_URL = process.env.MEMORY_API_URL || 'http://localhost:6011/api';
+const getConfig = function ({ baseUrl, baseDomain, basePort, baseProtocol }) {
+  if (baseUrl) {
+    return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  }
+
+  const domain = baseDomain || process.env.MEMORY_API_DOMAIN || 'localhost';
+  const port = basePort || process.env.MEMORY_API_PORT || '6011';
+  const protocol = baseProtocol || process.env.MEMORY_API_PROTOCOL || (port === '443' ? 'https' : 'http');
+
+  if (port === '80' || port === '443') {
+    return `${protocol}://${domain}/api`;
+  }
+  return `${protocol}://${domain}:${port}/api`;
+}
+
+const getUrl = function (url) {
+  let baseUrl = getConfig(this.config);
+  if (!baseUrl.endsWith('/')) {
+    baseUrl += '/';
+  }
+  return baseUrl + url.replace(/^\/+/, '');
+}
 
 export const upload = async function ({ content, name, type }) {
   const formData = new FormData();
@@ -35,7 +56,7 @@ export const upload = async function ({ content, name, type }) {
   });
 
   try {
-    const response = await axios.post(`${BASE_URL}/upload`, formData, {
+    const response = await axios.post(getUrl('/upload'), formData, {
       headers: {
         ...formData.getHeaders(),
         'Content-Type': 'multipart/form-data'
