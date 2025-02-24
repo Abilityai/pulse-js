@@ -1,13 +1,41 @@
 export class LLMClient {
-  constructor({ baseUrl = process.env.LLM_AGENCY_URL || 'http://127.0.0.1:5001', apiKey = process.env.LLM_AGENCY_KEY, urlPath = '' }) {
-    this.baseUrl = baseUrl;
+  constructor(config) {
+    this.getUrl = function (url) {
+      const b = (function ({ baseUrl, baseDomain, basePort, baseProtocol }) {
+        if (baseUrl === undefined) {
+          const domain = baseDomain !== undefined ? baseDomain : process.env.LLM_AGENCY_DOMAIN;
+          let port = basePort !== undefined ? basePort : (process.env.LLM_AGENCY_PORT || '5001');
+          let protocol = baseProtocol !== undefined ? baseProtocol : (process.env.LLM_AGENCY_PROTOCOL || (port === '443' ? 'https' : 'http'));
+          if (port === '80' || port === '443') {
+            baseUrl = `${protocol}://${domain}`;
+          } else {
+            baseUrl = `${protocol}://${domain}:${port}`;
+          }
+        }
+        if (baseUrl.endsWith('/')) {
+          return baseUrl.slice(0, -1);
+        }
+        return baseUrl;
+      })(config);
+      const u = (function ({ urlPath }) {
+        if (urlPath.startsWith('/')) {
+          return urlPath;
+        }
+        return `/${urlPath}`;
+      })(config);
+
+      if (url.startsWith('/')) {
+        return `${b}${u}${url}`;
+      } else {
+        return `${b}${u}/${url}`;
+      }
+    }
     this.apiKey = apiKey;
-    this.urlPath = urlPath;
   }
 
   async _request(data = {}, url = '', method_name = 'POST') {
     const m = String(method_name).toUpperCase();
-    const response = await fetch(`${this.baseUrl}${this.urlPath}${url}`, {
+    const response = await fetch(this.getUrl(url), {
       method: m,
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +73,7 @@ export class LLMClient {
     if (!threadUid) {
       return [];
     }
-    const response = await this._http_request(undefined, `/messages/${threadUid}`, 'GET');
+    const response = await this._request(undefined, `/messages/${threadUid}`, 'GET');
     return response.messages;
   }
 }
