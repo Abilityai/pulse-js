@@ -18,6 +18,9 @@ export class LLMClient {
         return baseUrl;
       })(config);
       const u = (function ({ urlPath }) {
+        if (urlPath === undefined) {
+          return '';
+        }
         if (urlPath.startsWith('/')) {
           return urlPath;
         }
