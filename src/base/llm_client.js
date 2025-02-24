@@ -30,7 +30,11 @@ export class LLMClient {
         return `${b}${u}/${url}`;
       }
     }
-    this.apiKey = apiKey;
+
+    if (!config.apiKey) {
+      throw new Error("apiKey is required");
+    }
+    this.apiKey = config.apiKey;
   }
 
   async _request(data = {}, url = '', method_name = 'POST') {
