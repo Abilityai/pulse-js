@@ -24,7 +24,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 
-const getConfig = function ({ baseUrl, baseDomain, basePort, baseProtocol }) {
+const getConfig = function ({ baseUrl, baseDomain, basePort, baseProtocol } = {}) {
   if (baseUrl) {
     return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   }
@@ -36,18 +36,15 @@ const getConfig = function ({ baseUrl, baseDomain, basePort, baseProtocol }) {
   if (port === '80' || port === '443') {
     return `${protocol}://${domain}/api`;
   }
-  return `${protocol}://${domain}:${port}/api`;
+  return { baseUrl: `${protocol}://${domain}:${port}/api` };
 }
 
-const getUrl = function (url) {
-  let baseUrl = getConfig(this.config);
-  if (!baseUrl.endsWith('/')) {
-    baseUrl += '/';
-  }
-  return baseUrl + url.replace(/^\/+/, '');
+const getUrl = function (url, options) {
+  let { baseUrl } = getConfig(options);
+  return baseUrl + '/' + url.replace(/^\/+/, '');
 }
 
-export const upload = async function ({ content, name, type }) {
+export const upload = async function ({ content, name, type }, options) {
   const formData = new FormData();
   // The server expects the file under the 'file' key
   formData.append('file', content, {
@@ -56,7 +53,7 @@ export const upload = async function ({ content, name, type }) {
   });
 
   try {
-    const response = await axios.post(getUrl('/upload'), formData, {
+    const response = await axios.post(getUrl('/upload', options), formData, {
       headers: {
         ...formData.getHeaders(),
         'Content-Type': 'multipart/form-data'
@@ -72,18 +69,19 @@ export const upload = async function ({ content, name, type }) {
 // Memory API client
 // Example usage:
 // const memory1 = await Memory('bucket-uid');
-// const memory2 = await Memory({ schema: {...}, config: {...} });
+// const memory2 = await Memory({ schema: {...}, config: {...} }, options);
 // await memory1.write('path.to.data[2]', data);
 // const data = await memory1.read('path.to.data[0]');
 // await memory1.delete('path.to.data[1]');
-export const Memory = async function (args) {
+export const Memory = async function (args, options = {}) {
+  const url = (u) => getUrl(u, options)
   let uid;
   if (typeof args === 'string') {
     uid: args
   } else {
     uid = await (async ({ schema, config }) => {
       try {
-        const response = await axios.post(`${BASE_URL}/bucket`, { schema, configuration: config });
+        const response = await axios.post(url('/bucket'), { schema, configuration: config });
         return response.data.uid;
       } catch (error) {
         throw new Error(`Failed to initialize project: ${error.message}`);
@@ -95,7 +93,7 @@ export const Memory = async function (args) {
     try {
       const response = await axios.request({
         method,
-        url: `${BASE_URL}/bucket/${uid}/${path}`,
+        url: url(`/bucket/${uid}/${path}`),
         data
       });
       return response.data;
