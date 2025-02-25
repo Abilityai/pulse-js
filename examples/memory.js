@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import { Memory, upload } from '../src/memory/index.js';
-import { assert } from 'console';
 
 const sha1 = (input) => crypto.createHash('sha1').update(input, 'utf8').digest('hex');
 

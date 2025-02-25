@@ -1,6 +1,6 @@
 # Pulse JS
 
-JavaScript SDK for connecting to ability.ai/llm_core.
+A lightweight JavaScript SDK for seamless integration with ability.ai/llm_core services. Access multiple LLM providers through a unified API.
 
 ## Installation
 
@@ -10,146 +10,181 @@ npm install @ability/pulse
 
 ## Configuration
 
-The SDK can be configured using environment variables or by passing options to the client:
+Configure the SDK using environment variables or by passing options directly to the client:
 
 ```bash
 # Environment variables
-LLM_AGENCY_URL=http://127.0.0.1:5001
-LLM_AGENCY_KEY=your_api_key
+LLM_AGENCY_DOMAIN=localhost     # API domain (default: localhost)
+LLM_AGENCY_PORT=5001            # API port (default: 5001)
+LLM_AGENCY_PROTOCOL=http        # API protocol (default: http, or https if port is 443)
+LLM_AGENCY_KEY=your_api_key     # Required API key
 ```
 
 ## Basic Usage
 
-### Using GPT for text completion
+### Chat Models
+
+Access different LLM providers through a unified interface using the `Chat` class:
 
 ```javascript
-import { GPT } from '@ability/pulse';
+import { Chat } from 'pulse';
 
-const gpt = new GPT({ model: 'gpt-3.5-turbo-16k-0613' });
-const gptResponse = await gpt.get({
+// Initialize with your preferred model
+const chat = new Chat({
+  model: 'gpt-4o',               // Model name
+  apiKey: 'your_api_key'         // Optional if set via env var
+});
+
+// Send a message and get a response
+const response = await chat.get({
   messages: [
-    GPT.systemMessage("You are a helpful GPT assistant."),
-    GPT.userMessage("What is the meaning of life?")
-  ]
-});
-console.log("GPT Response:", gptResponse.answer);
-console.log(gptResponse.threadUid);
-console.log(gptResponse.usage);
-```
-
-### Using Claude for text completion
-
-```javascript
-import { Claude } from '@ability/pulse';
-
-const claude = new Claude({ model: 'claude-3-haiku-20240307' });
-const claudeResponse = await claude.get({
-  messages: [
-    Claude.systemMessage("You are a helpful Claude assistant."),
-    Claude.userMessage("What is 2+2?")
-  ]
-});
-console.log("Claude Response:", claudeResponse.answer);
-console.log(claudeResponse.threadUid);
-console.log(claudeResponse.usage);
-```
-
-### Using Llama for text completion
-
-```javascript
-import { Llama } from '@ability/pulse';
-
-const llama = new Llama({ model: 'llama3-8b-8192' });
-const llamaResponse = await llama.get({
-  messages: [
-    Llama.systemMessage("You are a helpful Llama assistant."),
-    Llama.userMessage("Tell me a joke.")
-  ]
-});
-console.log("Llama Response:", llamaResponse.answer);
-console.log(llamaResponse.threadUid);
-console.log(llamaResponse.usage);
-```
-
-### Using Dalle for image generation
-
-```javascript
-import { Dalle } from '@ability/pulse';
-
-const dalle = new Dalle({ model: 'dall-e-3' });
-const dalleResponse = await dalle.get({
-  prompt: "A futuristic cityscape at sunset with flying cars."
-});
-console.log("Dalle Response:", dalleResponse.answer);
-console.log(dalleResponse.threadUid);
-console.log(dalleResponse.usage);
-```
-
-### Using Flux for image generation
-
-```javascript
-import { Flux } from '@ability/pulse';
-
-const flux = new Flux({ model: 'flux-pro' });
-const fluxResponse = await flux.get({
-  prompt: "A neon-lit cyberpunk street scene at night."
-});
-console.log("Flux Response:", fluxResponse.answer);
-console.log(fluxResponse.threadUid);
-console.log(fluxResponse.usage);
-```
-
-### Using Gemini for text completion
-
-```javascript
-import { Gemini } from '@ability/pulse';
-
-const gemini = new Gemini({ model: 'gemini-1.5-flash' });
-const geminiResponse = await gemini.get({
-  messages: [
-    Gemini.systemMessage("You are a helpful Gemini assistant."),
-    Gemini.userMessage("What is the capital of France?")
-  ]
-});
-console.log("Gemini Response:", geminiResponse.answer);
-console.log(geminiResponse.threadUid);
-console.log(geminiResponse.usage);
-```
-
-### Response Format Examples:
-
-```
-// Text-based models:
-/// {
-///   answer: {
-///     role: 'assistant',
-///     content: 'Generated text response'
-///   },
-///   threadUid: 'UniqueThreadID',
-///   usage: 'Optional usage stats'
-/// }
-
-// Image-based models:
-/// {
-///   answer: {
-///     type: 'image',
-///     url: 'Generated image URL'
-///   },
-///   threadUid: 'UniqueThreadID',
-///   usage: 'Optional usage stats'
-/// }
-
-// Saving messages
-// (Available in text-based models derived from LLMClient)
-const threadUid = await gpt.save({
-  messages: [
-    GPT.systemMessage("Sample system message."),
-    GPT.userMessage("Sample user message.")
+    Chat.systemMessage("You are a helpful assistant."),
+    Chat.userMessage("What's the distance between Earth and Mars?")
   ],
-  answer: gptResponse.answer
+  kind: 'str'  // Request a string response
 });
 
-// Retrieving message history
-const history = await gpt.messages(threadUid);
-console.log("Message History:", history);
+console.log(response.answer.content);
+console.log(`Thread ID: ${response.thread}`);
+console.log(`Token usage: ${JSON.stringify(response.usage)}`);
+```
+
+### Function Calling (Tools)
+
+Enhance your AI with tools for external data access or computation:
+
+```javascript
+import { Chat, tool } from 'pulse';
+
+const chat = new Chat({ model: 'gpt-4o-mini' });
+
+const response = await chat.get({
+  messages: [
+    Chat.systemMessage("You're an assistant with tool access."),
+    Chat.userMessage("What's 42 × 18?")
+  ],
+  tools: [
+    tool({
+      name: 'calculator',
+      description: 'Performs arithmetic calculations',
+      parameters: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['add', 'subtract', 'multiply', 'divide']
+          },
+          a: { type: 'number' },
+          b: { type: 'number' }
+        },
+        required: ['operation', 'a', 'b']
+      }
+    }, async ({ operation, a, b }) => {
+      switch (operation) {
+        case 'add': return a + b;
+        case 'subtract': return a - b;
+        case 'multiply': return a * b;
+        case 'divide': return a / b;
+      }
+    })
+  ]
+});
+
+console.log(response.answer.content);
+```
+
+### Image Generation
+
+Generate images using DALL-E or Flux models:
+
+```javascript
+import { Image } from 'pulse';
+
+const imageGen = new Image({ model: 'flux-pro' });
+const result = await imageGen.get({
+  prompt: "A serene mountain lake at sunset with reflections"
+});
+
+console.log(`Generated image URL: ${result.answer.url}`);
+```
+
+### Memory Storage
+
+Store and retrieve structured data with schema validation:
+
+```javascript
+import { Memory } from 'pulse';
+
+// Create a new memory bucket with schema
+const memory = await Memory({
+  schema: {
+    type: "object",
+    properties: {
+      users: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            score: { type: "number" }
+          }
+        }
+      }
+    }
+  }
+});
+
+// Write data
+await memory.write('users', [
+  { name: "Alice", score: 95 },
+  { name: "Bob", score: 87 }
+]);
+
+// Read data
+const users = await memory.read('users');
+console.log(users);
+
+// Validate against schema
+const validation = await memory.validate();
+console.log(`Data valid: ${validation.is_passed}`);
+```
+
+## Response Formats
+
+```javascript
+// Text responses
+{
+  answer: {
+    role: 'assistant',
+    content: 'Generated text response'
+  },
+  thread: 'thread_123abc',
+  usage: { prompt_tokens: 42, completion_tokens: 128 }
+}
+
+// Image responses
+{
+  answer: {
+    type: 'image',
+    url: 'https://storage.example.com/generated-image.png'
+  },
+  thread: 'thread_456def'
+}
+
+// Function call responses
+{
+  answer: {
+    role: 'assistant',
+    content: 'I calculated the result for you.',
+    tool_calls: [
+      {
+        id: 'call_789ghi',
+        function: {
+          name: 'calculator',
+          arguments: '{"operation":"multiply","a":42,"b":18}'
+        }
+      }
+    ]
+  }
+}
 ```
