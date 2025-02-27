@@ -183,6 +183,7 @@ export const Memory = async function (args, options = {}) {
   const del = async (path) => request('delete', path);
 
   return {
+    uid: uid.toString(), // prevent accidental mutation
     async write(path, value) {
       return await post('', { path, value });
     },
