@@ -190,21 +190,21 @@ export const Memory = async function (args, options = {}) {
     async update(path, value) {
       return await put('', { path, value });
     },
-    async read(path) {
+    async read(path = '') {
       return await get(`blob/current/${path}`);
     },
     async delete(path) {
       return await del(`?path=${path}`);
     },
-    async validate(path) {
+    async validate(path = '') {
       const queryParams = path ? `?path=${path}` : '';
       return await get(`validate/${queryParams}`);
     },
     async config(path) {
       return await get(`config?path=${path}`);
     },
-    async schema() {
-      return await get(`schema`);
+    async schema(path = '') {
+      return await get(`schema?path=${path}`);
     },
     async simpleSchema() {
       //...
