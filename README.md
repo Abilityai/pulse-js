@@ -14,10 +14,15 @@ Configure the SDK using environment variables or by passing options directly to 
 
 ```bash
 # Environment variables
-LLM_AGENCY_DOMAIN=localhost     # API domain (default: localhost)
-LLM_AGENCY_PORT=5001            # API port (default: 5001)
-LLM_AGENCY_PROTOCOL=http        # API protocol (default: http, or https if port is 443)
-LLM_AGENCY_KEY=your_api_key     # Required API key
+# URL Configuration
+LLM_AGENCY_URL=http://localhost:5001   # Complete base URL (highest priority)
+LLM_AGENCY_HOST=localhost:5001         # Combined domain and optional port, could be LLM_AGENCY_HOST=core.ability.ai with LLM_AGENCY_PROTOCOL=https
+LLM_AGENCY_DOMAIN=localhost            # API domain (default: localhost)
+LLM_AGENCY_PORT=5001                   # API port (default: 5001)
+LLM_AGENCY_PROTOCOL=http               # API protocol (default: http, or https if port is 443)
+
+# Authentication
+LLM_AGENCY_KEY=your_api_key            # Required API key
 ```
 
 ## Basic Usage
